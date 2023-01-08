@@ -7,14 +7,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IBusinessToken {
     function mintToken(address _toAddress, uint256 _amount) external;
-
-    function totalSupply() external view returns (uint256);
 }
 
 interface IBusinessCard {
     function ownerOf(uint256 tokenId) external view returns (address owner);
-
-    function approve(address to, uint256 tokenId) external;
 
     function safeTransferFrom(
         address from,
@@ -40,7 +36,7 @@ contract BusinessWorld is IERC721Receiver {
         string name;
         uint256 maxEmployment;
         uint256 baseSalary;
-        // activeEmployee necessary, because we need to check, while updating the max number of employees 
+        // activeEmployee necessary, because we need to check, while updating the max number of employees
         uint256 activeEmployee;
     }
     // count for company id
@@ -96,10 +92,12 @@ contract BusinessWorld is IERC721Receiver {
 
     // Only owner can close the company.
     function bankruptcyCompany(uint256 _companyId) external onlyOwner {
+        Company memory company = companies[_companyId];
+        require(company.activeEmployee == 0, "You can't bankruptcy the company, there are still employees.");
+        // baseSalary must not be zero, so this is how the existence of this company can be checked.
+        require(company.baseSalary > 0, "This company does not exist.");
         delete companies[_companyId];
     }
-
-    
 
     // Only owner can change the maximum number of employees of the company
     function changeMaxEmployment(uint256 _companyId, uint256 _newMaxEmployment)
@@ -107,7 +105,10 @@ contract BusinessWorld is IERC721Receiver {
         onlyOwner
     {
         Company storage company = companies[_companyId];
-        require(company.activeEmployee <= _newMaxEmployment, "There are more active employees than the given amount.");
+        require(
+            company.activeEmployee <= _newMaxEmployment,
+            "There are more active employees than the given amount."
+        );
         company.maxEmployment = _newMaxEmployment;
     }
 
@@ -119,8 +120,10 @@ contract BusinessWorld is IERC721Receiver {
             _employeeId
         );
         require(nftOwner == msg.sender, "You're not owner of this NFT.");
-        // baseSalary must be zero, so this is how the existence of this company can be checked.
+        // baseSalary must not be zero, so this is how the existence of this company can be checked.
         require(company.baseSalary > 0, "This company does not exist.");
+        // the maximum number of employees is exceeded?
+        require(company.activeEmployee < company.maxEmployment, "the maximum number of employees is exceeded.");
         // Is the contract authorized for this nft?
         require(
             approvedAddress == address(this),
@@ -138,7 +141,7 @@ contract BusinessWorld is IERC721Receiver {
         );
 
         // updating active employee count
-        company.activeEmployee ++;
+        company.activeEmployee++;
 
         // new employee updating
         employees[_employeeId] = Employee({
@@ -151,6 +154,7 @@ contract BusinessWorld is IERC721Receiver {
         });
     }
 
+    // Owner of "NFT" can fire own employee from job. So we transfer the earned income and send the nft to the owner.
     function fireFromJob(uint256 _employeeId) external {
         Employee storage employee = employees[_employeeId];
         Company storage company = companies[employee.companyId];
@@ -179,9 +183,10 @@ contract BusinessWorld is IERC721Receiver {
         mintToken(employee.owner, accumulateIncome);
 
         delete employees[_employeeId];
-        company.activeEmployee --;
+        company.activeEmployee--;
     }
 
+    // The owner of "nft" can withdraw own accumulated income.
     function claimAccumulateIncome(uint256 _employeeId) external {
         Employee storage employee = employees[_employeeId];
         require(
@@ -212,11 +217,11 @@ contract BusinessWorld is IERC721Receiver {
         Company memory company = companies[employee.companyId];
 
         uint256 timeDifference = block.timestamp - employee.lastClaimedAt;
-        uint256 perMinute = timeDifference / 60;
+        uint256 perTenSeconds = timeDifference / 10;
 
         uint256 income = company.baseSalary *
             employee.salaryMultiple *
-            perMinute;
+            perTenSeconds;
 
         return income;
     }
@@ -253,15 +258,18 @@ contract BusinessWorld is IERC721Receiver {
         return IERC721Receiver.onERC721Received.selector;
     }
 
+    // Get company count for frontend
+    function getMaxCompanyIndex() external view returns(uint256){
+        return companyCount;
+    } 
+
+    // Can change the owner of this contract.
     function transferOwnership(address _newOwner) external onlyOwner {
         owner = _newOwner;
     }
 
+    // This is an internal function to access and mint the ERC20 token contract via the interface.
     function mintToken(address _toAddress, uint256 _amount) internal {
         IBusinessToken(businessToken).mintToken(_toAddress, _amount);
     }
-
-    // function totalSupp() external view returns (uint256) {
-    //     return IBusinessToken(businessToken).totalSupply();
-    // }
 }
