@@ -88,9 +88,13 @@ contract BusinessWorld is IERC721Receiver {
         uint256 lastClaimedAt;
         uint256 employeeId;
         uint256 salaryMultiple;
+        uint256 employeeIndex;
     }
     // mapping from nftId to employee
     mapping(uint256 => Employee) public employees;
+
+    // This index will increase with each recruitment. This will verify ownership.
+    mapping(address => uint256[]) private ownEmployeeIndexes;
 
     //Variables
     address private owner;
@@ -198,6 +202,10 @@ contract BusinessWorld is IERC721Receiver {
         // salary multiplier calculate internal function.
         uint256 _salaryMultiple = getSalaryMultiplier(_employeeId);
 
+        // to access all nfts of owner.
+        uint256 _employeeIndex = ownEmployeeIndexes[msg.sender].length;
+        ownEmployeeIndexes[msg.sender].push(_employeeId);
+
         IBusinessCard(businessCard).safeTransferFrom(
             msg.sender,
             address(this),
@@ -217,7 +225,8 @@ contract BusinessWorld is IERC721Receiver {
             startAt: timestamp,
             lastClaimedAt: timestamp,
             employeeId: _employeeId,
-            salaryMultiple: _salaryMultiple
+            salaryMultiple: _salaryMultiple,
+            employeeIndex: _employeeIndex
         });
 
         emit HireAJob(_employeeId, msg.sender, _companyId, timestamp);
@@ -252,6 +261,8 @@ contract BusinessWorld is IERC721Receiver {
 
         // mint businessToken to nft owner
         mintToken(employee.owner, accumulateIncome);
+        // used to access all nfts of owner.
+        delete ownEmployeeIndexes[msg.sender][employee.employeeIndex];
 
         delete employees[_employeeId];
         company.activeEmployee--;
@@ -341,6 +352,11 @@ contract BusinessWorld is IERC721Receiver {
         bytes calldata
     ) external pure override returns (bytes4) {
         return IERC721Receiver.onERC721Received.selector;
+    }
+
+    // Get All employees of given address.
+    function getEmployees(address _ownerOfEmployees) external view returns(uint256[] memory) {
+        return ownEmployeeIndexes[_ownerOfEmployees];
     }
 
     // Get Companies from frontend
