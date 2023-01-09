@@ -10,13 +10,27 @@ contract BusinessCard is ERC721 {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    string public baseURI = "ipfs://ipfs/";
+    // Modifiers
+    modifier onlyOwner() {
+        require(owner == msg.sender, "You're not owner.");
+        _;
+    }
 
-    constructor() ERC721("BusinessCard", "BCard") {}
+    string public baseURI = "ipfs://";
+    address private owner;
+
+    constructor() ERC721("BusinessCard", "BCard") {
+        owner = msg.sender;
+    }
 
     function mintBusinessCard() external {
         _tokenIds.increment();
         _mint(msg.sender, _tokenIds.current());
+    }
+
+    // set new metadata uri
+    function setNewBaseUri(string memory _newBaseUri) external onlyOwner {
+        baseURI = _newBaseUri;
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -39,6 +53,7 @@ contract BusinessCard is ERC721 {
 
         // I show the same nft metadata every 10 instead of NFT generation, Since it's a demo!
         tokenId = tokenId % 10;
+        //
 
         return
             bytes(currentBaseURI).length > 0
