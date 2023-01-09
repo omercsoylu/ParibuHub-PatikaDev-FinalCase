@@ -77,6 +77,8 @@ contract BusinessWorld is IERC721Receiver {
     uint256 private companyCount;
     // mapping from id to company
     mapping(uint256 => Company) public companies;
+    // array of companies for access from frontend
+    Company[] private companyArr;
 
     // Structs Employee
     struct Employee {
@@ -123,6 +125,9 @@ contract BusinessWorld is IERC721Receiver {
             activeEmployee: 0
         });
 
+        // can access from frontend
+        companyArr.push(companies[companyCount]);
+
         emit EstablishCompany(
             companyCount,
             _companyName,
@@ -142,6 +147,9 @@ contract BusinessWorld is IERC721Receiver {
         require(company.baseSalary > 0, "This company does not exist.");
         delete companies[_companyId];
 
+        // can access from frontend
+        delete companyArr[_companyId - 1];
+
         emit BankruptcyCompany(_companyId, company.name);
     }
 
@@ -151,11 +159,16 @@ contract BusinessWorld is IERC721Receiver {
         onlyOwner
     {
         Company storage company = companies[_companyId];
+        // baseSalary must not be zero, so this is how the existence of this company can be checked.
+        require(company.baseSalary > 0, "This company does not exist.");
         require(
             company.activeEmployee <= _newMaxEmployment,
             "There are more active employees than the given amount."
         );
         company.maxEmployment = _newMaxEmployment;
+
+        // can access from frontend
+        companyArr[_companyId - 1] = company;
 
         emit ChangeMaxEmployment(_companyId, company.name, _newMaxEmployment);
     }
@@ -193,6 +206,9 @@ contract BusinessWorld is IERC721Receiver {
 
         // updating active employee count
         company.activeEmployee++;
+
+        // can access from frontend
+        companyArr[_companyId - 1] = company;
 
         // new employee updating
         employees[_employeeId] = Employee({
@@ -232,11 +248,16 @@ contract BusinessWorld is IERC721Receiver {
 
         uint256 accumulateIncome = getAccumulateIncome(_employeeId);
 
+        uint256 companyId = employee.companyId;
+
         // mint businessToken to nft owner
         mintToken(employee.owner, accumulateIncome);
 
         delete employees[_employeeId];
         company.activeEmployee--;
+
+        // can access from frontend
+        companyArr[companyId - 1] = company;
 
         emit FireFromJob(
             _employeeId,
@@ -271,8 +292,9 @@ contract BusinessWorld is IERC721Receiver {
     }
 
     // This is internal function for calculating the accumulated income
+    // This function is public to access from frontend
     function getAccumulateIncome(uint256 _employeeId)
-        internal
+        public
         view
         returns (uint256)
     {
@@ -319,6 +341,11 @@ contract BusinessWorld is IERC721Receiver {
         bytes calldata
     ) external pure override returns (bytes4) {
         return IERC721Receiver.onERC721Received.selector;
+    }
+
+    // Get Companies from frontend
+    function getCompanies() external view returns (Company[] memory) {
+        return companyArr;
     }
 
     // Get company count for frontend
