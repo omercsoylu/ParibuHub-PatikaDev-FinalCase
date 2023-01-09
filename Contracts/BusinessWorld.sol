@@ -31,7 +31,41 @@ contract BusinessWorld is IERC721Receiver {
         _;
     }
 
-    // Structs
+    // Events
+    event EstablishCompany(
+        uint256 indexed companyId,
+        string companyName,
+        uint256 maxEmployment,
+        uint256 baseSalary
+    );
+    event BankruptcyCompany(uint256 indexed companyId, string companyName);
+    event ChangeMaxEmployment(
+        uint256 indexed companyId,
+        string companyName,
+        uint256 newMaxEmployment
+    );
+    event HireAJob(
+        uint256 indexed employeeId,
+        address indexed employeeOwner,
+        uint256 companyId,
+        uint256 startAt
+    );
+    event FireFromJob(
+        uint256 indexed employeeId,
+        address indexed employeeOwner,
+        uint256 companyId,
+        uint256 timestamp,
+        uint256 accumulateIncome
+    );
+    event ClaimAccumulateIncome(
+        uint256 indexed employeeId,
+        address indexed employeeOwner,
+        uint256 accumulateIncome
+    );
+    event TransferOwnership(address currentOwner, address newOwner);
+    // End-of-Events
+
+    // Structs Company
     struct Company {
         string name;
         uint256 maxEmployment;
@@ -44,7 +78,7 @@ contract BusinessWorld is IERC721Receiver {
     // mapping from id to company
     mapping(uint256 => Company) public companies;
 
-    //
+    // Structs Employee
     struct Employee {
         address owner;
         uint256 companyId;
@@ -88,15 +122,27 @@ contract BusinessWorld is IERC721Receiver {
             baseSalary: _baseSalary,
             activeEmployee: 0
         });
+
+        emit EstablishCompany(
+            companyCount,
+            _companyName,
+            _maxEmployment,
+            _baseSalary
+        );
     }
 
     // Only owner can close the company.
     function bankruptcyCompany(uint256 _companyId) external onlyOwner {
         Company memory company = companies[_companyId];
-        require(company.activeEmployee == 0, "You can't bankruptcy the company, there are still employees.");
+        require(
+            company.activeEmployee == 0,
+            "You can't bankruptcy the company, there are still employees."
+        );
         // baseSalary must not be zero, so this is how the existence of this company can be checked.
         require(company.baseSalary > 0, "This company does not exist.");
         delete companies[_companyId];
+
+        emit BankruptcyCompany(_companyId, company.name);
     }
 
     // Only owner can change the maximum number of employees of the company
@@ -110,6 +156,8 @@ contract BusinessWorld is IERC721Receiver {
             "There are more active employees than the given amount."
         );
         company.maxEmployment = _newMaxEmployment;
+
+        emit ChangeMaxEmployment(_companyId, company.name, _newMaxEmployment);
     }
 
     // Owner of NFT can get NFT employee to work
@@ -123,7 +171,10 @@ contract BusinessWorld is IERC721Receiver {
         // baseSalary must not be zero, so this is how the existence of this company can be checked.
         require(company.baseSalary > 0, "This company does not exist.");
         // the maximum number of employees is exceeded?
-        require(company.activeEmployee < company.maxEmployment, "the maximum number of employees is exceeded.");
+        require(
+            company.activeEmployee < company.maxEmployment,
+            "the maximum number of employees is exceeded."
+        );
         // Is the contract authorized for this nft?
         require(
             approvedAddress == address(this),
@@ -152,6 +203,8 @@ contract BusinessWorld is IERC721Receiver {
             employeeId: _employeeId,
             salaryMultiple: _salaryMultiple
         });
+
+        emit HireAJob(_employeeId, msg.sender, _companyId, timestamp);
     }
 
     // Owner of "NFT" can fire own employee from job. So we transfer the earned income and send the nft to the owner.
@@ -184,6 +237,14 @@ contract BusinessWorld is IERC721Receiver {
 
         delete employees[_employeeId];
         company.activeEmployee--;
+
+        emit FireFromJob(
+            _employeeId,
+            msg.sender,
+            employee.companyId,
+            block.timestamp,
+            accumulateIncome
+        );
     }
 
     // The owner of "nft" can withdraw own accumulated income.
@@ -205,6 +266,8 @@ contract BusinessWorld is IERC721Receiver {
         uint256 accumulateIncome = getAccumulateIncome(_employeeId);
         employee.lastClaimedAt = block.timestamp;
         mintToken(employee.owner, accumulateIncome);
+
+        emit ClaimAccumulateIncome(_employeeId, msg.sender, accumulateIncome);
     }
 
     // This is internal function for calculating the accumulated income
@@ -259,13 +322,15 @@ contract BusinessWorld is IERC721Receiver {
     }
 
     // Get company count for frontend
-    function getMaxCompanyIndex() external view returns(uint256){
+    function getMaxCompanyIndex() external view returns (uint256) {
         return companyCount;
-    } 
+    }
 
     // Can change the owner of this contract.
     function transferOwnership(address _newOwner) external onlyOwner {
         owner = _newOwner;
+
+        emit TransferOwnership(msg.sender, _newOwner);
     }
 
     // This is an internal function to access and mint the ERC20 token contract via the interface.
