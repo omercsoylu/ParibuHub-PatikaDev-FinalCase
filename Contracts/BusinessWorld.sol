@@ -72,6 +72,7 @@ contract BusinessWorld is IERC721Receiver {
         uint256 baseSalary;
         // activeEmployee necessary, because we need to check, while updating the max number of employees
         uint256 activeEmployee;
+        uint256 companyIndex;
     }
     // count for company id
     uint256 private companyCount;
@@ -126,7 +127,8 @@ contract BusinessWorld is IERC721Receiver {
             name: _companyName,
             maxEmployment: _maxEmployment,
             baseSalary: _baseSalary,
-            activeEmployee: 0
+            activeEmployee: 0,
+            companyIndex: companyCount
         });
 
         // can access from frontend
@@ -355,7 +357,11 @@ contract BusinessWorld is IERC721Receiver {
     }
 
     // Get All employees of given address.
-    function getEmployees(address _ownerOfEmployees) external view returns(uint256[] memory) {
+    function getEmployees(address _ownerOfEmployees)
+        external
+        view
+        returns (uint256[] memory)
+    {
         return ownEmployeeIndexes[_ownerOfEmployees];
     }
 
