@@ -5,6 +5,9 @@ pragma abicoder v2;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
+// @title BusinessCard NFT
+// @author @github/omercsoylu
+
 contract BusinessCard is ERC721 {
     using Strings for uint256;
     using Counters for Counters.Counter;
