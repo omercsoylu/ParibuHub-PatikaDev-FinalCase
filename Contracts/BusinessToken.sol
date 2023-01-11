@@ -3,6 +3,10 @@ pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+// @title BusinessToken
+// @author @github/omercsoylu
+// Please ensure to add BusinessWorld as owner to contract with addOwner function to access this contract.
+
 contract BusinessToken is ERC20 {
     mapping(address => bool) private owners;
 
