@@ -4,6 +4,11 @@
 It is a repo ParibuHub-Patika.dev-Solidity-Practicum-Final-Case.
 
 
+- @author/developer :[@omercsoylu](https://github.com/omercsoylu)
+
+[Please visit this repo for frontend demo](https://github.com/omercsoylu/ParibuHub-PatikaDev-FinalCase-Frontend)
+
+
 ## Contents
 
 - ERC20 Token to be minted by staking business card NFTs
@@ -33,7 +38,7 @@ NFTs are each owned by employees with a title. The salary coefficients of these 
 #### How does the contract calculate revenue?
 
 This game is a demo so we have defined a title for each id for convenience. For example, ids like 1-11-21 are CEOs. And the title of CEO has a revenue coefficient. Companies also have a revenue multiplier. In which company the NFT is employed, a salary calculation is made from these values ​​and the owner of the NFT can withdraw it in certain periods.
-## Lisans
+## Licences
 
 [MIT](https://choosealicense.com/licenses/mit/)
 
