@@ -5,10 +5,17 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// @title BusinessCard NFT
+// @author @github/omercsoylu
+// This contract has been prepared for educational purposes. For commercial use, you must perform the necessary security checks.
+
+
+// Interface: To access the BusinessToken ERC20 contract.
 interface IBusinessToken {
     function mintToken(address _toAddress, uint256 _amount) external;
 }
 
+// Interface: To access the BusinessCard ERC721 contract.
 interface IBusinessCard {
     function ownerOf(uint256 tokenId) external view returns (address owner);
 
@@ -24,14 +31,15 @@ interface IBusinessCard {
         returns (address operator);
 }
 
+
 contract BusinessWorld is IERC721Receiver {
-    // Modifiers
+    // Modifiers: onlyOwner
     modifier onlyOwner() {
         require(owner == msg.sender, "You're not owner.");
         _;
     }
 
-    // Events
+    // Events: To listen transactions from the frontend
     event EstablishCompany(
         uint256 indexed companyId,
         string companyName,
@@ -63,9 +71,9 @@ contract BusinessWorld is IERC721Receiver {
         uint256 accumulateIncome
     );
     event TransferOwnership(address currentOwner, address newOwner);
-    // End-of-Events
+    
 
-    // Structs Company
+    // Structs: Company
     struct Company {
         string name;
         uint256 maxEmployment;
@@ -74,14 +82,14 @@ contract BusinessWorld is IERC721Receiver {
         uint256 activeEmployee;
         uint256 companyIndex;
     }
-    // count for company id
+    // will be used to index companies by id
     uint256 private companyCount;
     // mapping from id to company
     mapping(uint256 => Company) public companies;
     // array of companies for access from frontend
     Company[] private companyArr;
 
-    // Structs Employee
+    // Structs: Employee
     struct Employee {
         address owner;
         uint256 companyId;
@@ -97,14 +105,11 @@ contract BusinessWorld is IERC721Receiver {
     // This index will increase with each recruitment. This will verify ownership.
     mapping(address => uint256[]) private ownEmployeeIndexes;
 
-    //Variables
+    // will be used for the onlyOwner modifier
     address private owner;
+    // These will be used for the interface. Assigned as immutable to be defined in the constructor.
     address immutable businessToken;
     address immutable businessCard;
-
-    //
-
-    //
 
     constructor(address _token, address _nftoken) {
         // owner assigned.
@@ -159,7 +164,7 @@ contract BusinessWorld is IERC721Receiver {
         emit BankruptcyCompany(_companyId, company.name);
     }
 
-    // Only owner can change the maximum number of employees of the company
+    // Only owner can change the maximum number of employees of the company.
     function changeMaxEmployment(uint256 _companyId, uint256 _newMaxEmployment)
         external
         onlyOwner
@@ -179,7 +184,7 @@ contract BusinessWorld is IERC721Receiver {
         emit ChangeMaxEmployment(_companyId, company.name, _newMaxEmployment);
     }
 
-    // Owner of NFT can get NFT employee to work
+    // Owner of NFT can get NFT employee to work.
     function hireAJob(uint256 _companyId, uint256 _employeeId) external {
         Company storage company = companies[_companyId];
         address nftOwner = IBusinessCard(businessCard).ownerOf(_employeeId);
@@ -214,7 +219,7 @@ contract BusinessWorld is IERC721Receiver {
             _employeeId
         );
 
-        // updating active employee count
+        // updating active employee counter.
         company.activeEmployee++;
 
         // can access from frontend
@@ -304,8 +309,8 @@ contract BusinessWorld is IERC721Receiver {
         emit ClaimAccumulateIncome(_employeeId, msg.sender, accumulateIncome);
     }
 
-    // This is internal function for calculating the accumulated income
-    // This function is public to access from frontend
+    // This is must be 'internal' function for calculating the accumulated income.
+    // But this function is defined as 'public' to access from frontend.
     function getAccumulateIncome(uint256 _employeeId)
         public
         view
