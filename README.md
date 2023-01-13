@@ -18,14 +18,14 @@ In the same way, contract address and ABI of BusinessWorld should be replaced wi
 In order for the BusinessWorld contract to access the BusinessToken, 
 the BusinessWorld contract address must be added as the owner with the "addOwner" function of the BusinessToken contract.
 
-!!"polygon testnet" mumbai is used in this project.
-Please make sure you have polygon mumbai tesnet in your wallet and active network is mumbai when testing.
 
 
 ## Demo
 
 https://heartfelt-florentine-6a4329.netlify.app/
 
+!!"polygon testnet" mumbai is used in this project.
+Please make sure you have polygon mumbai tesnet in your wallet and active network is mumbai when testing.
   
 ## Snapshots
 
