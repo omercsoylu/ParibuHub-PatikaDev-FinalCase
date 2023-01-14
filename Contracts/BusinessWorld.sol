@@ -380,6 +380,7 @@ contract BusinessWorld is IERC721Receiver {
 
     // Can change the owner of this contract.
     function transferOwnership(address _newOwner) external onlyOwner {
+        require(_newOwner != address(0), "Invalid address.");
         owner = _newOwner;
 
         emit TransferOwnership(msg.sender, _newOwner);
